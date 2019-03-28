@@ -1,0 +1,9 @@
+<h1>Hello {{.User.Name}}<h1>
+<p>Family</p>
+<ul>
+   {{range .User.Family}}
+   <li>{{.}}</li>
+   {{end}}
+</ul>
+
+<p>My Dog's name is {{.Dog}}</p>
