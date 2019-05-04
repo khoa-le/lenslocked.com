@@ -5,6 +5,7 @@ import "html/template"
 func NewView(layout string, files ...string) *View {
 	files = append(files, 
 		"views/layout/boostrap.gohtml",
+		"views/layout/navbar.gohtml",
 		"views/layout/footer.gohtml",
 	)
 	
