@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"lenslocked.com/views"
+	"lenslocked.com/controllers"
 	"github.com/gorilla/mux"
 )
 
@@ -23,11 +24,6 @@ func contact(w http.ResponseWriter, r *http.Request) {
 	contactView.Render(w,nil)
 }
 
-func signup(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	signupView.Render(w,nil)
-}
-
 func faq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, "<h1>My Faq page</h1>")
@@ -38,15 +34,16 @@ func pageNotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	homeView = views.NewView("boostrap","views/home.gohtml")
-	contactView = views.NewView("boostrap","views/contact.gohtml")
-	signupView = views.NewView("boostrap","views/signup.gohtml")
+	homeView = views.NewView("bootstrap","views/home.gohtml")
+	contactView = views.NewView("bootstrap","views/contact.gohtml")
+	userController := controllers.NewUser()
 
 	r := mux.NewRouter()
 	r.NotFoundHandler = http.HandlerFunc(pageNotFound)
 	r.HandleFunc("/", home)
 	r.HandleFunc("/contact", contact)
-	r.HandleFunc("/signup", signup)
 	r.HandleFunc("/faq", faq)
+	r.HandleFunc("/signup", userController.New).Methods("GET")
+	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	http.ListenAndServe(":3000", r)
 }
