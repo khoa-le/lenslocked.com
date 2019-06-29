@@ -23,5 +23,10 @@ func (u *User) New(w http.ResponseWriter, r *http.Request){
 
 // POST /signup
 func (u *User) Create(w http.ResponseWriter, r *http.Request){
-	fmt.Println(w,"This is tempolary response")
+	if err := r.ParseForm(); err !=nil	{
+		panic(err)
+	}
+	fmt.Fprintln(w, r.PostForm["email"])
+	fmt.Fprintln(w, r.PostFormValue( "email"))
+	// fmt.Println(w,"This is tempolary response")
 }
