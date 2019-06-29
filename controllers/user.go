@@ -7,7 +7,7 @@ import (
 )
 func NewUser() *User{
 	return &User{
-		NewView: views.NewView("bootstrap", "views/user/new.gohtml"),
+		NewView: views.NewView("bootstrap", "user/new"),
 	}
 }
 type User struct{
