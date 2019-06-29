@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"github.com/gorilla/schema"
 	"lenslocked.com/views"
 )
 func NewUser() *User{
@@ -28,12 +27,9 @@ type SignupForm struct{
 }
 // POST /signup
 func (u *User) Create(w http.ResponseWriter, r *http.Request){
-	if err := r.ParseForm(); err !=nil	{
-		panic(err)
-	}
+	
 	var signupForm SignupForm
-	decoder := schema.NewDecoder()
-	if err := decoder.Decode(&signupForm,r.PostForm); err !=nil{
+	if err:= parseForm(r,&signupForm); err !=nil{
 		panic(err)
 	}
 	fmt.Fprintln(w, signupForm)
