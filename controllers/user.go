@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"lenslocked.com/views"
 )
@@ -22,4 +23,5 @@ func (u *User) New(w http.ResponseWriter, r *http.Request){
 
 // POST /signup
 func (u *User) Create(w http.ResponseWriter, r *http.Request){
+	fmt.Println(w,"This is tempolary response")
 }
