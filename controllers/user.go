@@ -40,6 +40,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request){
 	user := models.User{
 		Name:signupForm.Name,
 		Email: signupForm.Email,
+		Password: signupForm.Password,
 	}
 	if err := u.us.Create(&user); err!=nil {
 		http.Error(w, err.Error(),http.StatusInternalServerError)
@@ -67,4 +68,16 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
 	}
 	fmt.Fprintln(w, loginForm)
 
+	user,err := u.us.Authenticate(loginForm.Email, loginForm.Password)
+	 
+	switch err{
+	case models.ErrNotFound:
+		fmt.Fprintln(w,"Invalid Email Addess")
+	case models.ErrInvalidPassword:
+		fmt.Fprintln(w,"Invalid password provided")
+	case nil:
+		fmt.Fprintln(w, user)
+	default:
+		http.Error(w, err.Error(),http.StatusInternalServerError)
+	}
 }
