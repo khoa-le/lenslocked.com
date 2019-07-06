@@ -9,11 +9,13 @@ import (
 func NewUser(us *models.UserService) *User{
 	return &User{
 		NewView: views.NewView("bootstrap", "user/new"),
+		LoginView: views.NewView("bootstrap", "user/login"),
 		us: us,
 	}
 }
 type User struct{
 	NewView *views.View
+	LoginView *views.View
 	us *models.UserService
 }
 
@@ -31,7 +33,6 @@ type SignupForm struct{
 }
 // POST /signup
 func (u *User) Create(w http.ResponseWriter, r *http.Request){
-	
 	var signupForm SignupForm
 	if err:= parseForm(r,&signupForm); err !=nil{
 		panic(err)
@@ -44,4 +45,26 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request){
 		http.Error(w, err.Error(),http.StatusInternalServerError)
 	}
 	fmt.Fprintln(w, user)
+}
+
+// GET /login
+func (u *User) Login(w http.ResponseWriter, r *http.Request){
+	if err := u.LoginView.Render(w,nil); err !=nil{
+		panic(err)
+	}
+}
+
+type LoginForm struct{
+	Email string `schema:"email"`
+	Password string `schema:"password"`
+}
+
+// POST /login
+func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
+	var loginForm LoginForm
+	if err:= parseForm( r, &loginForm); err != nil{
+		panic(err)
+	}
+	fmt.Fprintln(w, loginForm)
+
 }
