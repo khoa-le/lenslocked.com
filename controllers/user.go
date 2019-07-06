@@ -66,18 +66,22 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
 	if err:= parseForm( r, &loginForm); err != nil{
 		panic(err)
 	}
-	fmt.Fprintln(w, loginForm)
-
 	user,err := u.us.Authenticate(loginForm.Email, loginForm.Password)
-	 
-	switch err{
-	case models.ErrNotFound:
-		fmt.Fprintln(w,"Invalid Email Addess")
-	case models.ErrInvalidPassword:
-		fmt.Fprintln(w,"Invalid password provided")
-	case nil:
-		fmt.Fprintln(w, user)
-	default:
-		http.Error(w, err.Error(),http.StatusInternalServerError)
+	if err !=nil{
+		switch err{
+		case models.ErrNotFound:
+			fmt.Fprintln(w,"Invalid Email Addess")
+		case models.ErrInvalidPassword:
+			fmt.Fprintln(w,"Invalid password provided")
+		default:
+			http.Error(w, err.Error(),http.StatusInternalServerError)
+		}
+		return
 	}
+	cookie := http.Cookie{
+		Name: "email",
+		Value: user.Email,
+	}
+	http.SetCookie(w, &cookie)
+	fmt.Fprintln(w, user)
 }
