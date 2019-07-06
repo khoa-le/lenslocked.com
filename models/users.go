@@ -29,6 +29,8 @@ var (
 	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
 
+const userPwdPepper = "secret-random-string"
+
 //ByID will look up a user with the provided  ID.
 func (us *UserService) ByID(id uint) (*User,error){
 	var user User
@@ -39,7 +41,8 @@ func (us *UserService) ByID(id uint) (*User,error){
 
 //Create will create the provided user and backfill data
 func (us *UserService) Create(user *User) error{
-	hashedBytes,err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	pwBytes := []byte(user.Password + userPwdPepper)
+	hashedBytes,err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err!=nil{
 		return err
 	}
