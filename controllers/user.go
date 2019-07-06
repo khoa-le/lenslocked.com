@@ -45,7 +45,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request){
 	if err := u.us.Create(&user); err!=nil {
 		http.Error(w, err.Error(),http.StatusInternalServerError)
 	}
-	fmt.Fprintln(w, user)
+	signIn(w, &user)
 }
 
 // GET /login
@@ -78,10 +78,14 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
 		}
 		return
 	}
+	signIn(w, user)
+}
+
+//signIn is used to sign the given user  in via  cookies
+func signIn(w http.ResponseWriter,  user *models.User){
 	cookie := http.Cookie{
 		Name: "email",
 		Value: user.Email,
 	}
 	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, user)
 }
