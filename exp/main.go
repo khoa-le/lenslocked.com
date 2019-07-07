@@ -10,8 +10,8 @@ import(
 )
 
 func main(){
-	toHash := []byte("this is my string to hash")
-	h:= hmac.New(sha256.New, []byte("my-secret-key"))
+	toHash := []byte("vGcywVLvrT8jmlA9Gu798u3svYeaKNT1gyXcC7Xf_Uk=")
+	h:= hmac.New(sha256.New, []byte("secret-hmac-key"))
 	h.Write(toHash)
 
 	b:=h.Sum(nil)
