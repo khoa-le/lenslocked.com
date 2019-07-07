@@ -7,7 +7,7 @@ import (
 	"lenslocked.com/models"
 	"lenslocked.com/rand"
 )
-func NewUser(us *models.UserService) *User{
+func NewUser(us models.UserService) *User{
 	return &User{
 		NewView: views.NewView("bootstrap", "user/new"),
 		LoginView: views.NewView("bootstrap", "user/login"),
@@ -17,7 +17,7 @@ func NewUser(us *models.UserService) *User{
 type User struct{
 	NewView *views.View
 	LoginView *views.View
-	us *models.UserService
+	us models.UserService
 }
 
 // GET /signup
@@ -92,7 +92,7 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
 
 //signIn is used to sign the given user  in via  cookies
 func (u *User) signIn(w http.ResponseWriter,  user *models.User) error{
-	if user.Remember != ""{
+	if user.Remember == ""{
 		 token, err := rand.RememberToken()
 		 if err != nil{
 			 return err
