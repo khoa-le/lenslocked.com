@@ -6,7 +6,19 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
+
 )
+
+var (
+	ErrNotFound = errors.New("models: resource not found")
+	ErrInvalidID = errors.New("models: ID provided was invalid")
+	ErrInvalidPassword = errors.New("models: invalid password prodvided")
+)
+const userPwdPepper = "secret-random-string"
+const hmacSecretKey = "secret-hmac-key"
 
 func NewUserService(connectionInfo string) (*UserService, error){
 	db,err := gorm.Open("postgres", connectionInfo)
@@ -14,24 +26,17 @@ func NewUserService(connectionInfo string) (*UserService, error){
 		panic(err)
 	}
 	db.LogMode(true)
+	hmac := hash.NewHMAC(hmacSecretKey)
 	return &UserService{
 		db:db,
+		hmac: hmac,
 	}, nil
 }
 
 type UserService struct{
 	db *gorm.DB
+	hmac hash.HMAC
 }
-
-var (
-	ErrNotFound = errors.New("models: resource not found")
-
-	ErrInvalidID = errors.New("models: ID provided was invalid")
-
-	ErrInvalidPassword = errors.New("models: invalid password prodvided")
-)
-
-const userPwdPepper = "secret-random-string"
 
 //ByID will look up a user with the provided  ID.
 func (us *UserService) ByID(id uint) (*User,error){
@@ -50,11 +55,24 @@ func (us *UserService) Create(user *User) error{
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+	
+	if user.Remember == ""{
+		token, err  := rand.RememberToken()
+		if err != nil{
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
+
 	return us.db.Create(user).Error
 }
 
 //Update user
 func (us *UserService) Update(user *User) error{
+	if user.Remember != ""{
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
 	return us.db.Save(user).Error
 }
 
@@ -64,6 +82,19 @@ func (us *UserService) ByEmail(email string) (*User,error){
 	db := us.db.Where("email=?",email)
 	err := first(db,&user)
 	return &user, err
+}
+
+//ByRemember will looks up a user with a given token string and return that user
+//This method will handle hashing token for us
+func (us *UserService) ByRemember(token string) (*User, error){
+	var user User
+	rememberHash := us.hmac.Hash(token)
+	err := first(us.db.Where("remember_hash = ?", rememberHash),&user)
+	if err != nil{
+		return nil, err
+	}
+
+	return &user, nil;
 }
 
 //Authenticate can be used to authenticate a user with the email and password
@@ -129,4 +160,6 @@ type User struct{
 	Email string `gorm:"not null;unique_index"`
 	Password string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
+	Remember string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }
