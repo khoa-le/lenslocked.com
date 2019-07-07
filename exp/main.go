@@ -1,56 +1,22 @@
 package main
 
 import(
-	"fmt"
-	 _ "github.com/jinzhu/gorm/dialects/postgres"
-	 
-	 "lenslocked.com/models"
-)
+	"crypto/hmac"
+	 "crypto/sha256"
+	 "encoding/base64"
+	 "fmt"
 
-const (
-	host = "localhost"
-	port = "5432"
-	user = "khoa"
-	dbname = "lenslocked_dev"
+	 "lenslocked.com/hash"
 )
 
 func main(){
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable",
-	host, port, user, dbname)
-	userService,err := models.NewUserService(psqlInfo)
-	defer userService.Close()
-	if err != nil{
-		panic(err)
-	}
-	userService.DestructiveReset()
+	toHash := []byte("this is my string to hash")
+	h:= hmac.New(sha256.New, []byte("my-secret-key"))
+	h.Write(toHash)
 
-	user := models.User{
-		Name: "Khanh Minh 2",
-		Email: "khanhminh3@gmail.com",
-	}
-	if err:= userService.Create(&user); err !=nil{
-		panic(err)
-	}
+	b:=h.Sum(nil)
+	fmt.Println(base64.URLEncoding.EncodeToString(b))
 
-	// user.Email ="khanhminh2@gmail.com"
-	// if err := userService.Update(&user); err != nil{
-	// 	panic(err)
-	// }
-
-	userByEmail, err := userService.ByEmail("khanhminh3@gmail.com")
-	if err !=nil{
-		panic(err)
-	}
-	fmt.Println(userByEmail.Name)
-
-	if err := userService.Delete(userByEmail.ID); err!=nil{
-		panic(err)
-	}
-
-	// user,err := userService.ByID(1)
-	// if err != nil{
-	// 	panic(err)
-	// }
-	// fmt.Println(user)
-
+	hmac := hash.NewHMAC("my-secret-key")
+	fmt.Println(hmac.Hash("this is my string to hash"))
 }
