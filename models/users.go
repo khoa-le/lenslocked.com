@@ -137,7 +137,7 @@ func (uv *userValidator) ByRemember(token string) (*User, error){
 //Create will create the provided user and backfill data
 func (uv *userValidator) Create(user *User) error{
 	if err:=runUserValidatorFunction(user, uv.bcryptPassword, uv.setRememberIfUnset, uv.hmacRemember); err!=nil{
-		return err;
+		return err
 	}
 
 	return uv.UserDB.Create(user)
@@ -146,7 +146,7 @@ func (uv *userValidator) Create(user *User) error{
 //Update 
 func (uv *userValidator) Update(user *User) error{
 	if err:=runUserValidatorFunction(user, uv.hmacRemember); err!=nil{
-		return err;
+		return err
 	}
 
 	return uv.UserDB.Update(user)
@@ -154,8 +154,11 @@ func (uv *userValidator) Update(user *User) error{
 
 //Delete will delele the user with the provided ID
 func (uv *userValidator) Delete(id uint) error{
-	if id == 0{
-		return ErrInvalidID
+	var user User
+	user.ID = id
+	err := runUserValidatorFunction(&user, uv.idGreaterThan(0))
+	if err != nil{
+		return err
 	}
 	return uv.UserDB.Delete(id)
 }
@@ -176,6 +179,15 @@ func (uv *userValidator) bcryptPassword(user *User) error{
 	return nil
 }
 
+func (uv *userValidator) hmacRemember(user *User) error{
+	if user.Remember == ""{
+		return nil
+	}
+	user.RememberHash = uv.hmac.Hash(user.Remember)
+
+	return nil
+}
+
 func (uv *userValidator) setRememberIfUnset(user *User) error{
 	if user.Remember != ""{
 		return nil
@@ -188,13 +200,13 @@ func (uv *userValidator) setRememberIfUnset(user *User) error{
 	return nil
 }
 
-func (uv *userValidator) hmacRemember(user *User) error{
-	if user.Remember == ""{
+func (uv *userValidator) idGreaterThan(n uint) userValidatorFunction{
+	return userValidatorFunction(func(user *User) error{
+		if user.ID<= n{
+			return ErrInvalidID
+		}
 		return nil
-	}
-	user.RememberHash = uv.hmac.Hash(user.Remember)
-
-	return nil
+	})
 }
 
 var _ UserDB = &userGorm{}
