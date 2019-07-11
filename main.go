@@ -22,7 +22,7 @@ func main() {
 	if err != nil{
 		panic(err)
 	}
-	//userService.DestructiveReset()
+	userService.DestructiveReset()
 
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(userService)
