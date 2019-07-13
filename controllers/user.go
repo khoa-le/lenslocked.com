@@ -22,26 +22,14 @@ type User struct{
 
 // GET /signup
 func (u *User) New(w http.ResponseWriter, r *http.Request){
-
-	type Alert struct{
-		Level string
-		Message string
+	d := views.Data{
+		Alert: &views.Alert{
+			Level: views.AlertLevelError,
+			Message: "something went wrong",
+		},
+		Yield: "Hello",
 	}
-
-	type Data struct{
-		Alert Alert
-		Yield interface{}
-	}
-	a := Alert{
-		Level: "success",
-		Message:"Successfully rendered a dynammic alert",
-	}
-
-	d := Data{
-		Alert: a,
-		Yield: "hello!",
-	}
-
+	
 	if err := u.NewView.Render(w,d); err !=nil{
 		panic(err)
 	}
