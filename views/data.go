@@ -5,6 +5,9 @@ const (
 	AlertLevelWarning = "warning"
 	AlertLevelInfo = "info"
 	AlertLevelSuccess = "success"
+
+	//AlertMessageGeneric is display any user when error is encountered
+	AlertMessageGeneric = "Something went wrong, please try again and contact us if the problem persits"
 )
 
 //Alert is used to render Bootstrap Alert message in template

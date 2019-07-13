@@ -22,15 +22,7 @@ type User struct{
 
 // GET /signup
 func (u *User) New(w http.ResponseWriter, r *http.Request){
-	d := views.Data{
-		Alert: &views.Alert{
-			Level: views.AlertLevelError,
-			Message: "something went wrong",
-		},
-		Yield: "Hello",
-	}
-	
-	if err := u.NewView.Render(w,d); err !=nil{
+	if err := u.NewView.Render(w,nil); err !=nil{
 		panic(err)
 	}
 }
@@ -42,9 +34,15 @@ type SignupForm struct{
 }
 // POST /signup
 func (u *User) Create(w http.ResponseWriter, r *http.Request){
+	var vd views.Data
 	var signupForm SignupForm
 	if err:= parseForm(r,&signupForm); err !=nil{
-		panic(err)
+		vd.Alert = &views.Alert{
+			Level : views.AlertLevelError,
+			 Message : views.AlertMessageGeneric,
+		}
+		u.NewView.Render(w, vd)
+		return
 	}
 	user := models.User{
 		Name:signupForm.Name,
@@ -52,12 +50,16 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request){
 		Password: signupForm.Password,
 	}
 	if err := u.us.Create(&user); err!=nil {
-		http.Error(w, err.Error(),http.StatusInternalServerError)
+		vd.Alert = &views.Alert{
+			Level: views.AlertLevelError,
+			Message: err.Error(),
+		}
+		u.NewView.Render(w, vd)
 		return
 	}
 	err :=  u.signIn(w, &user)
 	if err !=nil{
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w,r,"/login",http.StatusFound)
 		return
 	}
 }
