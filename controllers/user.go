@@ -45,6 +45,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request){
 	}
 	if err := u.us.Create(&user); err!=nil {
 		http.Error(w, err.Error(),http.StatusInternalServerError)
+		return
 	}
 	err :=  u.signIn(w, &user)
 	if err !=nil{
@@ -76,7 +77,7 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request){
 		switch err{
 		case models.ErrNotFound:
 			fmt.Fprintln(w,"Invalid Email Addess")
-		case models.ErrInvalidPassword:
+		case models.ErrPasswordIncorrect:
 			fmt.Fprintln(w,"Invalid password provided")
 		default:
 			http.Error(w, err.Error(),http.StatusInternalServerError)

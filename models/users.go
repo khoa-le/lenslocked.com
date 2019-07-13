@@ -19,13 +19,13 @@ var (
 	//in the database
 	ErrNotFound = errors.New("models: resource not found")
 
-	//ErrInvalidID is returned when a invalid ID is provided
+	//ErrIDInvalid is returned when a invalid ID is provided
 	//to a method like Delete
-	ErrInvalidID = errors.New("models: ID provided was invalid")
+	ErrIDInvalid = errors.New("models: ID provided was invalid")
 
-	//ErrInvalidPassword is returned when an invalid password
+	//ErrPasswordIncorrect is returned when an invalid password
 	//is used when attempting to authenticate a user
-	ErrInvalidPassword = errors.New("models: invalid password prodvided")
+	ErrPasswordIncorrect = errors.New("models: invalid password prodvided")
 
 	//ErrEmailRequired is returned when email address is not provided
 	//when create a user
@@ -38,6 +38,18 @@ var (
 	//ErrEmailTaken is returned when an email address provided was taken
 	//by another user on update and create a user
 	ErrEmailTaken = errors.New("models: email address is already taken")
+
+	//ErrPasswordTooShort is returned when an update and create attempted
+	//with a user password that is less than 8 characters.
+	ErrPasswordTooShort = errors.New("models: password must be at least 8 characters long")
+
+	//ErrPasswordRequired is returned when an update and create attempted
+	//with a user password that is empty
+	ErrPasswordRequired = errors.New("models: password is required")
+
+	//ErrPasswordHashRequired is return when an update and create without
+	//password hash
+	ErrPasswordHashRequired = errors.New("models: password hash is required")
 )
 
 const userPwdPepper = "secret-random-string"
@@ -79,7 +91,7 @@ type UserDB interface{
 type UserService interface{
 	//Authenticate will verify the provided email and password are correct. If they
 	//are correct, the user corresponding to that email will return. Otherwise You
-	//will receive either: ErrNotFound, ErrInvalidPassword or other error if something 
+	//will receive either: ErrNotFound, ErrPasswordIncorrect or other error if something 
 	// goes wrong.
 	Authenticate(email, password string) (*User, error)
 
@@ -116,7 +128,7 @@ func (us *userService) Authenticate(email,password string) (*User, error){
 	if err != nil{
 		switch err {
 			case bcrypt.ErrMismatchedHashAndPassword: 
-				return nil, ErrInvalidPassword
+				return nil, ErrPasswordIncorrect
 			default:
 				return nil, err
 		}
@@ -180,7 +192,10 @@ func (uv *userValidator) ByRemember(token string) (*User, error){
 //Create will create the provided user and backfill data
 func (uv *userValidator) Create(user *User) error{
 	if err:=runUserValidatorFunction(user, 
-		uv.bcryptPassword, 
+		uv.passwordRequired,
+		uv.passwordMinLength,
+		uv.bcryptPassword,
+		uv.passwordHashRequired,
 		uv.setRememberIfUnset, 
 		uv.hmacRemember,
 		uv.normalizeEmail,
@@ -196,6 +211,9 @@ func (uv *userValidator) Create(user *User) error{
 //Update 
 func (uv *userValidator) Update(user *User) error{
 	if err:=runUserValidatorFunction(user, 
+		//uv.passwordMinLength,
+		uv.bcryptPassword,
+		uv.passwordHashRequired,
 		uv.hmacRemember,
 		uv.normalizeEmail,
 		uv.requireEmail,
@@ -258,7 +276,7 @@ func (uv *userValidator) setRememberIfUnset(user *User) error{
 func (uv *userValidator) idGreaterThan(n uint) userValidatorFunction{
 	return userValidatorFunction(func(user *User) error{
 		if user.ID<= n{
-			return ErrInvalidID
+			return ErrIDInvalid
 		}
 		return nil
 	})
@@ -296,8 +314,33 @@ func (uv *userValidator) emailIsAvailable(user *User) error{
 	if user.ID != existing.ID{
 		return ErrEmailTaken
 	}
-	return nil
 
+	return nil
+}
+
+func (uv *userValidator) passwordMinLength(user *User) error{
+	if user.Password == ""{
+		return nil
+	}
+
+	if len(user.Password)<8{
+		return ErrPasswordTooShort
+	}
+	return nil  
+}
+
+func (uv *userValidator) passwordRequired(user *User) error{
+	if user.Password == ""{
+		return ErrPasswordRequired
+	}
+	return nil
+}
+
+func (uv *userValidator) passwordHashRequired(user *User) error{
+	if user.PasswordHash == ""{
+		return ErrPasswordHashRequired
+	}
+	return nil
 }
 
 var _ UserDB = &userGorm{}
