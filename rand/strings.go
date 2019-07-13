@@ -7,6 +7,16 @@ import(
 
 const RemeberTokenBytes =32
 
+//NBytes return a number of bytes used in the base64
+//URL encoding string
+func NBytes(base64String string) (int,error){
+	b, err := base64.URLEncoding.DecodeString(base64String)
+	if err != nil{
+		return -1, err
+	}
+	return len(b), nil
+}
+
 //Bytes help us generate n random bytes
 func Bytes(n int) ([]byte,error){
 	b :=make([]byte,n)

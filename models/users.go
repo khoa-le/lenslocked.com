@@ -50,6 +50,13 @@ var (
 	//ErrPasswordHashRequired is return when an update and create without
 	//password hash
 	ErrPasswordHashRequired = errors.New("models: password hash is required")
+
+	//ErrRememberTooShort is return when Remember token string conver to len of bytes
+	//at least 32
+	ErrRememberTooShort = errors.New("models: remmeber token must be at least 32 bytes")
+
+	//ErrRememberHashRequired is retrun when Remember Hash is empty
+	ErrRememberHashRequired = errors.New("models: remember hash is required")
 )
 
 const userPwdPepper = "secret-random-string"
@@ -197,7 +204,9 @@ func (uv *userValidator) Create(user *User) error{
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
 		uv.setRememberIfUnset, 
+		uv.rememberMinBytes,
 		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
@@ -211,10 +220,12 @@ func (uv *userValidator) Create(user *User) error{
 //Update 
 func (uv *userValidator) Update(user *User) error{
 	if err:=runUserValidatorFunction(user, 
-		//uv.passwordMinLength,
+		uv.passwordMinLength,
 		uv.bcryptPassword,
 		uv.passwordHashRequired,
+		uv.rememberMinBytes,
 		uv.hmacRemember,
+		uv.rememberHashRequired,
 		uv.normalizeEmail,
 		uv.requireEmail,
 		uv.emailFormat,
@@ -270,6 +281,27 @@ func (uv *userValidator) setRememberIfUnset(user *User) error{
 		return err
 	}
 	user.Remember = token
+	return nil
+}
+func (uv *userValidator) rememberMinBytes(user *User) error{
+	if user.Remember == ""{
+		return nil
+	}
+	n,err := rand.NBytes(user.Remember)
+	if err != nil{
+		return err
+	}
+	if n < 32{
+		return ErrRememberTooShort
+	}
+
+	return nil
+}
+
+func (uv *userValidator) rememberHashRequired(user *User) error{
+	if user.RememberHash == ""{
+		return ErrRememberHashRequired
+	}
 	return nil
 }
 
