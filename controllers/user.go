@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"fmt"
 	"lenslocked.com/models"
 	"lenslocked.com/rand"
 	"lenslocked.com/views"
+	"log"
 	"net/http"
 )
 
@@ -75,25 +75,29 @@ type LoginForm struct {
 
 // POST /login
 func (u *User) DoLogin(w http.ResponseWriter, r *http.Request) {
+	vd := views.Data{}
 	var loginForm LoginForm
 	if err := parseForm(r, &loginForm); err != nil {
-		panic(err)
+		log.Println(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(w,vd)
+		return
 	}
 	user, err := u.us.Authenticate(loginForm.Email, loginForm.Password)
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(w, "Invalid Email Addess")
-		case models.ErrPasswordIncorrect:
-			fmt.Fprintln(w, "Invalid password provided")
+			vd.AlertError("Invalid Email Address")
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			vd.SetAlert(err)
 		}
+		u.LoginView.Render(w, vd)
 		return
 	}
 	err = u.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
 		return
 	}
 }
