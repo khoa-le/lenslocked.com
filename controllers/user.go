@@ -24,9 +24,7 @@ type User struct {
 
 // GET /signup
 func (u *User) New(w http.ResponseWriter, r *http.Request) {
-	if err := u.NewView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	u.NewView.Render(w, nil)
 }
 
 type SignupForm struct {
@@ -63,9 +61,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) {
 
 // GET /login
 func (u *User) Login(w http.ResponseWriter, r *http.Request) {
-	if err := u.LoginView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	u.LoginView.Render(w, nil)
 }
 
 type LoginForm struct {
@@ -80,7 +76,7 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &loginForm); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		u.LoginView.Render(w,vd)
+		u.LoginView.Render(w, vd)
 		return
 	}
 	user, err := u.us.Authenticate(loginForm.Email, loginForm.Password)
