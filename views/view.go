@@ -2,12 +2,12 @@ package views
 
 import (
 	"html/template"
-	"path/filepath"
 	"net/http"
+	"path/filepath"
 )
 
 var (
-	LayoutDir string = "views/layout/"
+	LayoutDir   string = "views/layout/"
 	TemplateDir string = "views/"
 	TemplateExt string = ".gohtml"
 )
@@ -16,25 +16,24 @@ func NewView(layout string, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
-	t,err := template.ParseFiles(files...)
-	if err != nil{
+	t, err := template.ParseFiles(files...)
+	if err != nil {
 		panic(err)
 	}
 
 	return &View{
 		Template: t,
-		Layout: layout,
+		Layout:   layout,
 	}
 }
 
-
 type View struct {
 	Template *template.Template
-	Layout string
+	Layout   string
 }
 
-func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request){
-	if err:=v.Render(w,nil); err!=nil{
+func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := v.Render(w, nil); err != nil {
 		panic(err)
 	}
 }
@@ -42,7 +41,7 @@ func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request){
 //Render is used to render the view with  the predefined layout
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "text/html")
-	switch data.(type){
+	switch data.(type) {
 	case Data:
 		//do nothing
 	default:
@@ -51,28 +50,27 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 		}
 	}
 
-
 	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
 
 //layoutFiles return a slice of strings representing
 // the layout files used in our application
-func layoutFiles() []string{
-	files, err := filepath.Glob(LayoutDir+ "*" + TemplateExt)
-	if err != nil{
+func layoutFiles() []string {
+	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
+	if err != nil {
 		panic(err)
 	}
 	return files
 }
 
 //
-func addTemplatePath(files[] string){
-	for i,f := range files{
+func addTemplatePath(files [] string) {
+	for i, f := range files {
 		files[i] = TemplateDir + f
 	}
 }
-func addTemplateExt(files[] string){
-	for i,f := range files{
+func addTemplateExt(files [] string) {
+	for i, f := range files {
 		files[i] = f + TemplateExt
 	}
 }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"strings"
 	"regexp"
 	"github.com/jinzhu/gorm"
@@ -12,51 +11,6 @@ import (
 	"lenslocked.com/hash"
 	"lenslocked.com/rand"
 
-)
-
-var (
-	//ErrNotFoud is returned when a resource cannot be found
-	//in the database
-	ErrNotFound = errors.New("models: resource not found")
-
-	//ErrIDInvalid is returned when a invalid ID is provided
-	//to a method like Delete
-	ErrIDInvalid = errors.New("models: ID provided was invalid")
-
-	//ErrPasswordIncorrect is returned when an invalid password
-	//is used when attempting to authenticate a user
-	ErrPasswordIncorrect = errors.New("models: invalid password prodvided")
-
-	//ErrEmailRequired is returned when email address is not provided
-	//when create a user
-	ErrEmailRequired = errors.New("models: email address is required")
-
-	//ErrEmailInvalid is returned when an invalid format email address 
-	//is provided when create a user
-	ErrEmailInvalid = errors.New("models: email address is not valid")
-
-	//ErrEmailTaken is returned when an email address provided was taken
-	//by another user on update and create a user
-	ErrEmailTaken = errors.New("models: email address is already taken")
-
-	//ErrPasswordTooShort is returned when an update and create attempted
-	//with a user password that is less than 8 characters.
-	ErrPasswordTooShort = errors.New("models: password must be at least 8 characters long")
-
-	//ErrPasswordRequired is returned when an update and create attempted
-	//with a user password that is empty
-	ErrPasswordRequired = errors.New("models: password is required")
-
-	//ErrPasswordHashRequired is return when an update and create without
-	//password hash
-	ErrPasswordHashRequired = errors.New("models: password hash is required")
-
-	//ErrRememberTooShort is return when Remember token string conver to len of bytes
-	//at least 32
-	ErrRememberTooShort = errors.New("models: remmeber token must be at least 32 bytes")
-
-	//ErrRememberHashRequired is retrun when Remember Hash is empty
-	ErrRememberHashRequired = errors.New("models: remember hash is required")
 )
 
 const userPwdPepper = "secret-random-string"
