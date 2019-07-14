@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	//ErrNotFoud is returned when a resource cannot be found
+	//ErrNotFound is returned when a resource cannot be found
 	//in the database
 	ErrNotFound modelError = "models: resource not found"
 
@@ -15,7 +15,7 @@ var (
 
 	//ErrPasswordIncorrect is returned when an invalid password
 	//is used when attempting to authenticate a user
-	ErrPasswordIncorrect modelError = "models: invalid password prodvided"
+	ErrPasswordIncorrect modelError = "models: invalid password provided"
 
 	//ErrEmailRequired is returned when email address is not provided
 	//when create a user
@@ -41,11 +41,11 @@ var (
 	//password hash
 	ErrPasswordHashRequired modelError = "models: password hash is required"
 
-	//ErrRememberTooShort is return when Remember token string conver to len of bytes
+	//ErrRememberTooShort is return when Remember token string convert to len of bytes
 	//at least 32
-	ErrRememberTooShort modelError = "models: remmeber token must be at least 32 bytes"
+	ErrRememberTooShort modelError = "models: remember token must be at least 32 bytes"
 
-	//ErrRememberHashRequired is retrun when Remember Hash is empty
+	//ErrRememberHashRequired is return when Remember Hash is empty
 	ErrRememberHashRequired modelError = "models: remember hash is required"
 )
 
