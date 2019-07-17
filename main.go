@@ -22,9 +22,9 @@ func main() {
 		panic(err)
 	}
 
-	// TODO: Fix it
-	//defer userService.Close()
-	//userService.DestructiveReset()
+	defer services.Close()
+	//services.DestructiveReset()
+	services.AutoMigrate()
 
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
