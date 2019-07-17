@@ -59,18 +59,15 @@ type UserService interface{
 	UserDB
 }
 
-func NewUserService(connectionInfo string) (UserService, error){
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil{
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) UserService{
+	ug := &userGorm{db}
 	hmac := hash.NewHMAC(hmacSecretKey)
 
 	uv := newUserValidator(ug, hmac)
 
 	return &userService{
 		UserDB :uv,
-	}, nil
+	}
 }
 
 var _ UserService = &userService{}
