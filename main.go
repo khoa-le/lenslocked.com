@@ -39,7 +39,8 @@ func main() {
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
 
 	//Gallery routes
-	r.HandleFunc("/gallery/new",galleryController.New).Methods("GET")
+	r.Handle("/gallery/new",galleryController.New).Methods("GET")
+	r.HandleFunc("/gallery",galleryController.Create).Methods("POST")
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", r)
 }

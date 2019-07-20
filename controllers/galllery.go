@@ -8,16 +8,36 @@ import (
 
 func NewGallery(gs models.GalleryService) *Gallery {
 	return &Gallery{
-		NewView:   views.NewView("bootstrap", "gallery/new"),
+		New:   views.NewView("bootstrap", "gallery/new"),
 		gs:        gs,
 	}
 }
 
 type Gallery struct {
-	NewView   *views.View
+	New   *views.View
 	gs        models.GalleryService
 }
 
-func (g *Gallery) New(w http.ResponseWriter,r *http.Request){
-	g.NewView.Render(w, nil)
+type GalleryForm struct{
+	Title string `schema."title"`
+}
+
+
+// POST /gallery/
+func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
+	var form GalleryForm
+	if err := parseForm(r, &form); err != nil {
+		vd.SetAlert(err)
+		g.New.Render(w, vd)
+		return
+	}
+	gallery := models.Gallery{
+		Title:     form.Title,
+	}
+	if err := g.gs.Create(&gallery); err != nil {
+		vd.SetAlert(err)
+		g.New.Render(w, vd)
+		return
+	}
 }
