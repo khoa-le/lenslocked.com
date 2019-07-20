@@ -1,6 +1,8 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+)
 
 type Gallery struct {
 	gorm.Model
@@ -19,7 +21,7 @@ type GalleryDB interface{
 
 func NewGalleryService(db *gorm.DB) GalleryService{
 	gg := &galleryGorm{db}
-	gv := &GalleryValidator{gg}
+	gv := &galleryValidator{gg}
 	return &galleryService{
 		GalleryDB: gv,
 	}
@@ -28,12 +30,37 @@ type galleryService struct{
 	GalleryDB
 }
 
-type GalleryValidator struct{
+type galleryValidator struct{
 	GalleryDB
 }
 
-var _ GalleryDB = &galleryGorm{}
+func (gv *galleryValidator) Create(gallery *Gallery) error{
+	if err:=runGalleryValidatorFunction(gallery,
+		gv.titleRequired,
+		gv.userIDRequired,
+		); err!=nil{
+		return err
+	}
 
+	return gv.GalleryDB.Create(gallery)
+}
+
+func (gv *galleryValidator) userIDRequired(gallery *Gallery ) error{
+	if gallery.UserID == 0{
+		return ErrUserIDRequired
+	}
+	return nil
+}
+
+func (gv *galleryValidator) titleRequired(gallery *Gallery ) error{
+	if gallery.Title == ""{
+		return ErrGalleryTitleRequired
+	}
+	return nil
+}
+
+
+var _ GalleryDB = &galleryGorm{}
 
 type galleryGorm struct{
 	db *gorm.DB
@@ -41,4 +68,15 @@ type galleryGorm struct{
 
 func (gg *galleryGorm) Create(gallery *Gallery) error{
 	return gg.db.Create(gallery).Error
+}
+
+type galleryValidatorFunction func(*Gallery) error
+
+func runGalleryValidatorFunction(gallery *Gallery, fns ...galleryValidatorFunction) error{
+	for _,fn :=range fns {
+		if err := fn(gallery); err!=nil{
+			return err
+		}
+	}
+	return nil
 }

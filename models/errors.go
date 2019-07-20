@@ -9,10 +9,6 @@ var (
 	//in the database
 	ErrNotFound modelError = "models: resource not found"
 
-	//ErrIDInvalid is returned when a invalid ID is provided
-	//to a method like Delete
-	ErrIDInvalid modelError = "models: ID provided was invalid"
-
 	//ErrPasswordIncorrect is returned when an invalid password
 	//is used when attempting to authenticate a user
 	ErrPasswordIncorrect modelError = "models: invalid password provided"
@@ -37,16 +33,27 @@ var (
 	//with a user password that is empty
 	ErrPasswordRequired modelError = "models: password is required"
 
+	//ErrGalleryTitleRequired return when Title of Gallery is empty
+	ErrGalleryTitleRequired modelError = "models: Title is required"
+
 	//ErrPasswordHashRequired is return when an update and create without
 	//password hash
 	ErrPasswordHashRequired modelError = "models: password hash is required"
 
+	//ErrIDInvalid is returned when a invalid ID is provided
+	//to a method like Delete
+	ErrIDInvalid privateError = "models: ID provided was invalid"
+
 	//ErrRememberTooShort is return when Remember token string convert to len of bytes
 	//at least 32
-	ErrRememberTooShort modelError = "models: remember token must be at least 32 bytes"
+	ErrRememberTooShort privateError = "models: remember token must be at least 32 bytes"
 
 	//ErrRememberHashRequired is return when Remember Hash is empty
-	ErrRememberHashRequired modelError = "models: remember hash is required"
+	ErrRememberHashRequired privateError = "models: remember hash is required"
+
+	//ErrorUserIDRequired return when UserID of Gallery is zero
+	ErrUserIDRequired privateError =  "models: UserID is required"
+
 )
 
 type modelError string
@@ -60,3 +67,11 @@ func (e modelError) Public() string{
 
 	return strings.Join(split, " ")
 }
+
+type privateError string
+
+func (e privateError) Error() string{
+	return string(e)
+}
+
+
