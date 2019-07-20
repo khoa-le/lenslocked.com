@@ -28,6 +28,7 @@ func main() {
 
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
+	galleryController := controllers.NewGallery(services.Gallery)
 
 	r := mux.NewRouter()
 	r.Handle("/", staticController.Home).Methods("GET")
@@ -36,6 +37,9 @@ func main() {
 	r.HandleFunc("/signup", userController.Create).Methods("POST")
 	r.HandleFunc("/login", userController.Login).Methods("GET")
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
+
+	//Gallery routes
+	r.HandleFunc("/gallery/new",galleryController.New).Methods("GET")
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", r)
 }
