@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"lenslocked.com/middleware"
 	"net/http"
 	"lenslocked.com/controllers"
 	"lenslocked.com/models"
@@ -29,6 +30,10 @@ func main() {
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
 	galleryController := controllers.NewGallery(services.Gallery)
+	
+	requireUserMw := middleware.RequireUser{
+		UserService: services.User,
+	}
 
 	r := mux.NewRouter()
 	r.Handle("/", staticController.Home).Methods("GET")
@@ -39,8 +44,8 @@ func main() {
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
 
 	//Gallery routes
-	r.Handle("/gallery/new",galleryController.New).Methods("GET")
-	r.HandleFunc("/gallery",galleryController.Create).Methods("POST")
+	r.Handle("/gallery/new",requireUserMw.Apply(galleryController.New)).Methods("GET")
+	r.HandleFunc("/gallery",requireUserMw.ApplyFn(galleryController.Create)).Methods("POST")
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", r)
 }
