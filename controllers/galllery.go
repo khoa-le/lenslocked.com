@@ -13,6 +13,7 @@ import (
 const (
 	RouteShowGallery = "show_gallery"
 	RouteEditGallery = "edit_gallery"
+	RouteUpdateGallery = "update_gallery"
 )
 
 func NewGallery(gs models.GalleryService, r *mux.Router) *Gallery {
@@ -64,6 +65,34 @@ func (g *Gallery) Edit(w http.ResponseWriter, r *http.Request){
 	var vd views.Data
 	vd.Yield = gallery
 	g.EditView.Render(w, vd)
+}
+
+//POST /gallery/:id/update
+func (g *Gallery) Update(w http.ResponseWriter, r *http.Request){
+	gallery, err := g.galleryByID(w,r)
+	if err !=nil{
+		return
+	}
+
+	user := context.User(r.Context())
+	if user.ID != gallery.UserID{
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	var vd views.Data
+	vd.Yield = gallery
+	var form GalleryForm
+	if err := parseForm(r, &form); err != nil{
+		vd.SetAlert(err)
+		g.EditView.Render(w, vd)
+		return
+	}
+
+	gallery.Title = form.Title
+	//g.gs.Update(gallery)
+
+	fmt.Fprintln(w, gallery)
 }
 
 // POST /gallery/
