@@ -12,12 +12,14 @@ import (
 
 const (
 	RouteShowGallery = "show_gallery"
+	RouteEditGallery = "edit_gallery"
 )
 
 func NewGallery(gs models.GalleryService, r *mux.Router) *Gallery {
 	return &Gallery{
 		New:   views.NewView("bootstrap", "gallery/new"),
 		ShowView:   views.NewView("bootstrap", "gallery/show"),
+		EditView:   views.NewView("bootstrap", "gallery/edit"),
 		gs:        gs,
 		r: r,
 	}
@@ -26,6 +28,7 @@ func NewGallery(gs models.GalleryService, r *mux.Router) *Gallery {
 type Gallery struct {
 	New   *views.View
 	ShowView *views.View
+	EditView *views.View
 	gs        models.GalleryService
 	r *mux.Router
 }
@@ -36,29 +39,31 @@ type GalleryForm struct{
 
 //GET /gallery/:id
 func (g *Gallery) Show(w http.ResponseWriter, r *http.Request){
-	vars := mux.Vars(r)
-	idStr := vars["id"]
-	id, err := strconv.Atoi(idStr)
-	if err != nil{
-		http.Error(w,"Invalid gallery ID", http.StatusNotFound)
+	gallery, err := g.galleryByID(w,r)
+	if err !=nil{
+		return
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	g.ShowView.Render(w, vd)
+}
+
+//GET /gallery/:id/edit
+func (g *Gallery) Edit(w http.ResponseWriter, r *http.Request){
+	gallery, err := g.galleryByID(w,r)
+	if err !=nil{
 		return
 	}
 
-	gallery,err := g.gs.ByID(uint(id))
-
-	if err != nil{
-		switch err {
-		case models.ErrNotFound:
-			http.Error(w, "Gallery not found", http.StatusNotFound)
-		default:
-			http.Error(w,"Whoops! Something went wrong", http.StatusInternalServerError)
-		}
+	user := context.User(r.Context())
+	if user.ID != gallery.UserID{
+		http.Error(w, "Gallery not found", http.StatusNotFound)
 		return
 	}
 
 	var vd views.Data
 	vd.Yield = gallery
-	g.ShowView.Render(w, vd)
+	g.EditView.Render(w, vd)
 }
 
 // POST /gallery/
@@ -92,4 +97,28 @@ func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, url.Path, http.StatusFound)
+}
+
+func (g *Gallery) galleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error){
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil{
+		http.Error(w,"Invalid gallery ID", http.StatusNotFound)
+		return nil, err
+	}
+
+	gallery,err := g.gs.ByID(uint(id))
+
+	if err != nil{
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+		default:
+			http.Error(w,"Whoops! Something went wrong", http.StatusInternalServerError)
+		}
+		return nil, err
+	}
+
+	return gallery, nil
 }

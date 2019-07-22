@@ -48,6 +48,7 @@ func main() {
 	r.Handle("/gallery/new",requireUserMw.Apply(galleryController.New)).Methods("GET")
 	r.HandleFunc("/gallery",requireUserMw.ApplyFn(galleryController.Create)).Methods("POST")
 	r.HandleFunc("/gallery/{id:[0-9]+}", galleryController.Show).Methods("GET").Name(controllers.RouteShowGallery)
+	r.HandleFunc("/gallery/{id:[0-9]+}/edit", requireUserMw.ApplyFn(galleryController.Edit)).Methods("GET").Name(controllers.RouteEditGallery)
 
 	fmt.Println("Starting the server on :3000...")
 	http.ListenAndServe(":3000", r)
