@@ -20,6 +20,7 @@ type GalleryDB interface{
 	Create(gallery *Gallery) error
 	Update(gallery *Gallery) error
 	Delete(id uint) error
+	ByUserID(userID uint) ([]Gallery, error)
 }
 
 func NewGalleryService(db *gorm.DB) GalleryService{
@@ -65,6 +66,7 @@ func (gv *galleryValidator) Delete(id uint) error{
 	}
 		return gv.GalleryDB.Delete(id)
 }
+
 
 func (gv *galleryValidator) userIDRequired(gallery *Gallery ) error{
 	if gallery.UserID == 0{
@@ -113,6 +115,12 @@ func (gg *galleryGorm) ByID(id uint) (*Gallery, error){
 func (gg *galleryGorm) Delete(id uint) error{
 	gallery := Gallery{Model: gorm.Model{ID: id}}
 	return gg.db.Delete(gallery).Error
+}
+
+func (gg *galleryGorm) ByUserID(userID uint) ([]Gallery, error){
+	var galleries []Gallery
+	gg.db.Where("user_id=?", userID).Find(&galleries)
+	return galleries, nil
 }
 
 type galleryValidatorFunction func(*Gallery) error

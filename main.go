@@ -45,6 +45,7 @@ func main() {
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
 
 	//Gallery routes
+	r.HandleFunc("/gallery/index",requireUserMw.ApplyFn(galleryController.Index)).Methods("GET")
 	r.Handle("/gallery/new",requireUserMw.Apply(galleryController.New)).Methods("GET")
 	r.HandleFunc("/gallery",requireUserMw.ApplyFn(galleryController.Create)).Methods("POST")
 	r.HandleFunc("/gallery/{id:[0-9]+}", galleryController.Show).Methods("GET").Name(controllers.RouteShowGallery)
