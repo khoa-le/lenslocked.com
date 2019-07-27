@@ -24,7 +24,7 @@ type User struct {
 
 // GET /signup
 func (u *User) New(w http.ResponseWriter, r *http.Request) {
-	u.NewView.Render(w, nil)
+	u.NewView.Render(w, r, nil)
 }
 
 type SignupForm struct {
@@ -39,7 +39,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) {
 	var signupForm SignupForm
 	if err := parseForm(r, &signupForm); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 	user := models.User{
@@ -49,7 +49,7 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := u.us.Create(&user); err != nil {
 		vd.SetAlert(err)
-		u.NewView.Render(w, vd)
+		u.NewView.Render(w, r, vd)
 		return
 	}
 	err := u.signIn(w, &user)
@@ -57,11 +57,12 @@ func (u *User) Create(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
+	http.Redirect(w,r , "/gallery/index", http.StatusFound)
 }
 
 // GET /login
 func (u *User) Login(w http.ResponseWriter, r *http.Request) {
-	u.LoginView.Render(w, nil)
+	u.LoginView.Render(w, r, nil)
 }
 
 type LoginForm struct {
@@ -76,7 +77,7 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request) {
 	if err := parseForm(r, &loginForm); err != nil {
 		log.Println(err)
 		vd.SetAlert(err)
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	user, err := u.us.Authenticate(loginForm.Email, loginForm.Password)
@@ -87,15 +88,16 @@ func (u *User) DoLogin(w http.ResponseWriter, r *http.Request) {
 		default:
 			vd.SetAlert(err)
 		}
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
 	err = u.signIn(w, user)
 	if err != nil {
 		vd.SetAlert(err)
-		u.LoginView.Render(w, vd)
+		u.LoginView.Render(w, r, vd)
 		return
 	}
+	http.Redirect(w,r , "/gallery/index", http.StatusFound)
 }
 
 //signIn is used to sign the given user  in via  cookies

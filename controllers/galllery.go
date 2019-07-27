@@ -49,7 +49,7 @@ func (g *Gallery) Index(w http.ResponseWriter, r *http.Request) {
 
 	var vd views.Data
 	vd.Yield = galleries
-	g.IndexView.Render(w, vd)
+	g.IndexView.Render(w, r,  vd)
 
 }
 
@@ -61,7 +61,7 @@ func (g *Gallery) Show(w http.ResponseWriter, r *http.Request) {
 	}
 	var vd views.Data
 	vd.Yield = gallery
-	g.ShowView.Render(w, vd)
+	g.ShowView.Render(w, r,  vd)
 }
 
 //GET /gallery/:id/edit
@@ -79,7 +79,7 @@ func (g *Gallery) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var vd views.Data
 	vd.Yield = gallery
-	g.EditView.Render(w, vd)
+	g.EditView.Render(w, r,  vd)
 }
 
 //POST /gallery/:id/update
@@ -100,14 +100,14 @@ func (g *Gallery) Update(w http.ResponseWriter, r *http.Request) {
 	var form GalleryForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		g.EditView.Render(w, vd)
+		g.EditView.Render(w, r,  vd)
 		return
 	}
 
 	gallery.Title = form.Title
 	if err := g.gs.Update(gallery); err != nil {
 		vd.SetAlert(err)
-		g.EditView.Render(w, vd)
+		g.EditView.Render(w, r,  vd)
 		return
 	}
 
@@ -115,7 +115,7 @@ func (g *Gallery) Update(w http.ResponseWriter, r *http.Request) {
 		Level:   views.AlertLevelSuccess,
 		Message: "Gallery successfully updated!",
 	}
-	g.EditView.Render(w, vd)
+	g.EditView.Render(w, r,  vd)
 }
 
 //POST /gallery/:id/delete
@@ -135,7 +135,7 @@ func (g *Gallery) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := g.gs.Delete(gallery.ID); err != nil {
 		vd.SetAlert(err)
 		vd.Yield = gallery
-		g.EditView.Render(w, vd)
+		g.EditView.Render(w, r,  vd)
 		return
 	}
 	http.Redirect(w, r, "/gallery/index", http.StatusFound)
@@ -147,7 +147,7 @@ func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
 	var form GalleryForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		g.New.Render(w, vd)
+		g.New.Render(w, r,  vd)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := g.gs.Create(&gallery); err != nil {
 		vd.SetAlert(err)
-		g.New.Render(w, vd)
+		g.New.Render(w, r,  vd)
 		return
 	}
 

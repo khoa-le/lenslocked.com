@@ -31,9 +31,12 @@ func main() {
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
 	galleryController := controllers.NewGallery(services.Gallery,r)
-	
-	requireUserMw := middleware.RequireUser{
+
+	userMw := middleware.User{
 		UserService: services.User,
+	}
+	requireUserMw := middleware.RequireUser{
+		User: userMw,
 	}
 
 
@@ -54,5 +57,5 @@ func main() {
 	r.HandleFunc("/gallery/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleryController.Delete)).Methods("POST")
 
 	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":3000", userMw.Apply(r))
 }
