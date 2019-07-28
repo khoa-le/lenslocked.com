@@ -3,10 +3,12 @@ package controllers
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"lenslocked.com/views"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -14,6 +16,8 @@ const (
 	RouteShowGallery   = "show_gallery"
 	RouteEditGallery   = "edit_gallery"
 	RouteUpdateGallery = "update_gallery"
+
+	maxMultipartMem = 1 << 20 //1 megabyte
 )
 
 func NewGallery(gs models.GalleryService, r *mux.Router) *Gallery {
@@ -49,7 +53,7 @@ func (g *Gallery) Index(w http.ResponseWriter, r *http.Request) {
 
 	var vd views.Data
 	vd.Yield = galleries
-	g.IndexView.Render(w, r,  vd)
+	g.IndexView.Render(w, r, vd)
 
 }
 
@@ -61,7 +65,7 @@ func (g *Gallery) Show(w http.ResponseWriter, r *http.Request) {
 	}
 	var vd views.Data
 	vd.Yield = gallery
-	g.ShowView.Render(w, r,  vd)
+	g.ShowView.Render(w, r, vd)
 }
 
 //GET /gallery/:id/edit
@@ -79,7 +83,7 @@ func (g *Gallery) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var vd views.Data
 	vd.Yield = gallery
-	g.EditView.Render(w, r,  vd)
+	g.EditView.Render(w, r, vd)
 }
 
 //POST /gallery/:id/update
@@ -100,14 +104,14 @@ func (g *Gallery) Update(w http.ResponseWriter, r *http.Request) {
 	var form GalleryForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		g.EditView.Render(w, r,  vd)
+		g.EditView.Render(w, r, vd)
 		return
 	}
 
 	gallery.Title = form.Title
 	if err := g.gs.Update(gallery); err != nil {
 		vd.SetAlert(err)
-		g.EditView.Render(w, r,  vd)
+		g.EditView.Render(w, r, vd)
 		return
 	}
 
@@ -115,7 +119,69 @@ func (g *Gallery) Update(w http.ResponseWriter, r *http.Request) {
 		Level:   views.AlertLevelSuccess,
 		Message: "Gallery successfully updated!",
 	}
-	g.EditView.Render(w, r,  vd)
+	g.EditView.Render(w, r, vd)
+}
+
+//POST /gallery/:id/images
+func (g *Gallery) ImageUpload(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(w, r)
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if user.ID != gallery.UserID {
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+
+	var vd views.Data
+	vd.Yield = gallery
+
+	err = r.ParseMultipartForm(maxMultipartMem)
+	if err != nil {
+		vd.SetAlert(err)
+		g.EditView.Render(w, r, vd)
+		return
+	}
+
+
+	//Create directory for file upload
+	galleryPath := fmt.Sprintf("images/galleries/%v/", gallery.ID)
+	err = os.MkdirAll(galleryPath, 0755)
+	if err != nil{
+		vd.SetAlert(err)
+		g.EditView.Render(w, r, vd)
+		return
+	}
+
+
+	files := r.MultipartForm.File["images"]
+	for _, f := range files {
+		file, err := f.Open()
+		if err != nil {
+			vd.SetAlert(err)
+			g.EditView.Render(w, r, vd)
+			return
+		}
+		defer file.Close()
+
+		dst,err := os.Create(galleryPath + f.Filename)
+		if err != nil{
+			vd.SetAlert(err)
+			g.EditView.Render(w, r, vd)
+			return
+		}
+		defer dst.Close()
+
+		_ , err = io.Copy(dst,file)
+		if err != nil{
+			vd.SetAlert(err)
+			g.EditView.Render(w, r, vd)
+			return
+		}
+	}
+	fmt.Fprintln(w, "File successfully uploaded")
 }
 
 //POST /gallery/:id/delete
@@ -135,7 +201,7 @@ func (g *Gallery) Delete(w http.ResponseWriter, r *http.Request) {
 	if err := g.gs.Delete(gallery.ID); err != nil {
 		vd.SetAlert(err)
 		vd.Yield = gallery
-		g.EditView.Render(w, r,  vd)
+		g.EditView.Render(w, r, vd)
 		return
 	}
 	http.Redirect(w, r, "/gallery/index", http.StatusFound)
@@ -147,7 +213,7 @@ func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
 	var form GalleryForm
 	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
-		g.New.Render(w, r,  vd)
+		g.New.Render(w, r, vd)
 		return
 	}
 
@@ -161,7 +227,7 @@ func (g *Gallery) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := g.gs.Create(&gallery); err != nil {
 		vd.SetAlert(err)
-		g.New.Render(w, r,  vd)
+		g.New.Render(w, r, vd)
 		return
 	}
 
