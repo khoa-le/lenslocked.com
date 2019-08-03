@@ -162,7 +162,13 @@ func (g *Gallery) ImageUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	fmt.Fprintln(w, "File successfully uploaded")
+
+	images, err := g.is.ByGalleryID(gallery.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintln(w, "Files:", images)
 }
 
 //POST /gallery/:id/delete
@@ -240,6 +246,12 @@ func (g *Gallery) galleryByID(w http.ResponseWriter, r *http.Request) (*models.G
 			http.Error(w, "Whoops! Something went wrong", http.StatusInternalServerError)
 		}
 		return nil, err
+	}
+
+	gallery.Images = []string{}
+	images, err := g.is.ByGalleryID(gallery.ID)
+	if err == nil {
+		gallery.Images = images
 	}
 
 	return gallery, nil

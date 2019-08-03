@@ -3,6 +3,13 @@
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <h1 class="card-title">{{.Title}}</h1>
+                <ul>
+                    {{range .Images}}
+                        <li>
+                            {{.}}
+                        </li>
+                    {{end}}
+                </ul>
                 <p>Images coming soon...</p>
             </div>
         </div>
