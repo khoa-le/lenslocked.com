@@ -3,12 +3,10 @@ package controllers
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"io"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"lenslocked.com/views"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -20,13 +18,14 @@ const (
 	maxMultipartMem = 1 << 20 //1 megabyte
 )
 
-func NewGallery(gs models.GalleryService, r *mux.Router) *Gallery {
+func NewGallery(gs models.GalleryService, is models.ImageService, r *mux.Router) *Gallery {
 	return &Gallery{
 		New:       views.NewView("bootstrap", "gallery/new"),
 		IndexView: views.NewView("bootstrap", "gallery/index"),
 		ShowView:  views.NewView("bootstrap", "gallery/show"),
 		EditView:  views.NewView("bootstrap", "gallery/edit"),
 		gs:        gs,
+		is:        is,
 		r:         r,
 	}
 }
@@ -37,6 +36,7 @@ type Gallery struct {
 	ShowView  *views.View
 	EditView  *views.View
 	gs        models.GalleryService
+	is        models.ImageService
 	r         *mux.Router
 }
 
@@ -145,17 +145,6 @@ func (g *Gallery) ImageUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-	//Create directory for file upload
-	galleryPath := fmt.Sprintf("images/galleries/%v/", gallery.ID)
-	err = os.MkdirAll(galleryPath, 0755)
-	if err != nil{
-		vd.SetAlert(err)
-		g.EditView.Render(w, r, vd)
-		return
-	}
-
-
 	files := r.MultipartForm.File["images"]
 	for _, f := range files {
 		file, err := f.Open()
@@ -166,16 +155,8 @@ func (g *Gallery) ImageUpload(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		dst,err := os.Create(galleryPath + f.Filename)
-		if err != nil{
-			vd.SetAlert(err)
-			g.EditView.Render(w, r, vd)
-			return
-		}
-		defer dst.Close()
-
-		_ , err = io.Copy(dst,file)
-		if err != nil{
+		err = g.is.Create(gallery.ID, file, f.Filename)
+		if err != nil {
 			vd.SetAlert(err)
 			g.EditView.Render(w, r, vd)
 			return
