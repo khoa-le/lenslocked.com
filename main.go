@@ -2,24 +2,25 @@ package main
 
 import (
 	"fmt"
-	"lenslocked.com/middleware"
-	"net/http"
-	"lenslocked.com/controllers"
-	"lenslocked.com/models"
 	"github.com/gorilla/mux"
+	"lenslocked.com/controllers"
+	"lenslocked.com/middleware"
+	"lenslocked.com/models"
+	"net/http"
 )
+
 const (
-	host = "localhost"
-	port = "5432"
-	user = "khoa"
+	host   = "localhost"
+	port   = "5432"
+	user   = "khoa"
 	dbname = "lenslocked_dev"
 )
 
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable",
-	host, port, user, dbname)
-	services,err := models.NewServices(psqlInfo)
-	if err !=nil{
+		host, port, user, dbname)
+	services, err := models.NewServices(psqlInfo)
+	if err != nil {
 		panic(err)
 	}
 
@@ -30,7 +31,7 @@ func main() {
 	r := mux.NewRouter()
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
-	galleryController := controllers.NewGallery(services.Gallery,services.Image,r)
+	galleryController := controllers.NewGallery(services.Gallery, services.Image, r)
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -39,7 +40,6 @@ func main() {
 		User: userMw,
 	}
 
-
 	r.Handle("/", staticController.Home).Methods("GET")
 	r.Handle("/contact", staticController.Contact).Methods("GET")
 	r.HandleFunc("/signup", userController.New).Methods("GET")
@@ -47,10 +47,14 @@ func main() {
 	r.HandleFunc("/login", userController.Login).Methods("GET")
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
 
+	//Images route
+	imageHandler := http.FileServer(http.Dir("./images/"))
+	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
+
 	//Gallery routes
-	r.HandleFunc("/gallery/index",requireUserMw.ApplyFn(galleryController.Index)).Methods("GET")
-	r.Handle("/gallery/new",requireUserMw.Apply(galleryController.New)).Methods("GET")
-	r.HandleFunc("/gallery",requireUserMw.ApplyFn(galleryController.Create)).Methods("POST")
+	r.HandleFunc("/gallery/index", requireUserMw.ApplyFn(galleryController.Index)).Methods("GET")
+	r.Handle("/gallery/new", requireUserMw.Apply(galleryController.New)).Methods("GET")
+	r.HandleFunc("/gallery", requireUserMw.ApplyFn(galleryController.Create)).Methods("POST")
 	r.HandleFunc("/gallery/{id:[0-9]+}", galleryController.Show).Methods("GET").Name(controllers.RouteShowGallery)
 	r.HandleFunc("/gallery/{id:[0-9]+}/edit", requireUserMw.ApplyFn(galleryController.Edit)).Methods("GET").Name(controllers.RouteEditGallery)
 	r.HandleFunc("/gallery/{id:[0-9]+}/update", requireUserMw.ApplyFn(galleryController.Update)).Methods("POST").Name(controllers.RouteUpdateGallery)

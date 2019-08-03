@@ -6,17 +6,28 @@ import (
 
 type Gallery struct {
 	gorm.Model
-	UserID uint `gorm:"not_null,index"`
-	Title string `gorm:"not_null"`
+	UserID uint     `gorm:"not_null,index"`
+	Title  string   `gorm:"not_null"`
 	Images []string `gorm:"-"`
 }
 
-type GalleryService interface{
+func (g *Gallery) ImageSplitN(n int) [][]string {
+	ret := make([][]string, n)
+	for i := 0; i < n; i++ {
+		ret[i] = make([]string, 0)
+	}
+	for i, img := range g.Images {
+		bucket := i % n
+		ret[bucket] = append(ret[bucket], img)
+	}
+	return ret
+}
+
+type GalleryService interface {
 	GalleryDB
 }
 
-
-type GalleryDB interface{
+type GalleryDB interface {
 	ByID(id uint) (*Gallery, error)
 	Create(gallery *Gallery) error
 	Update(gallery *Gallery) error
@@ -24,68 +35,68 @@ type GalleryDB interface{
 	ByUserID(userID uint) ([]Gallery, error)
 }
 
-func NewGalleryService(db *gorm.DB) GalleryService{
+func NewGalleryService(db *gorm.DB) GalleryService {
 	gg := &galleryGorm{db}
 	gv := &galleryValidator{gg}
 	return &galleryService{
 		GalleryDB: gv,
 	}
 }
-type galleryService struct{
+
+type galleryService struct {
 	GalleryDB
 }
 
-type galleryValidator struct{
+type galleryValidator struct {
 	GalleryDB
 }
 
-func (gv *galleryValidator) Create(gallery *Gallery) error{
-	if err:=runGalleryValidatorFunction(gallery,
+func (gv *galleryValidator) Create(gallery *Gallery) error {
+	if err := runGalleryValidatorFunction(gallery,
 		gv.titleRequired,
 		gv.userIDRequired,
-		); err!=nil{
+	); err != nil {
 		return err
 	}
 
 	return gv.GalleryDB.Create(gallery)
 }
 
-func (gv *galleryValidator) Update(gallery *Gallery) error{
+func (gv *galleryValidator) Update(gallery *Gallery) error {
 	if err := runGalleryValidatorFunction(gallery,
 		gv.titleRequired,
-		gv.userIDRequired,);err != nil{
-			return err
+		gv.userIDRequired, ); err != nil {
+		return err
 	}
 	return gv.GalleryDB.Update(gallery)
 }
 
-func (gv *galleryValidator) Delete(id uint) error{
-	gallery := &Gallery{Model: gorm.Model{ID:id}}
+func (gv *galleryValidator) Delete(id uint) error {
+	gallery := &Gallery{Model: gorm.Model{ID: id}}
 	if err := runGalleryValidatorFunction(gallery,
-		gv.idGreaterThan(0),);err != nil{
-			return err
+		gv.idGreaterThan(0), ); err != nil {
+		return err
 	}
-		return gv.GalleryDB.Delete(id)
+	return gv.GalleryDB.Delete(id)
 }
 
-
-func (gv *galleryValidator) userIDRequired(gallery *Gallery ) error{
-	if gallery.UserID == 0{
+func (gv *galleryValidator) userIDRequired(gallery *Gallery) error {
+	if gallery.UserID == 0 {
 		return ErrUserIDRequired
 	}
 	return nil
 }
 
-func (gv *galleryValidator) titleRequired(gallery *Gallery ) error{
-	if gallery.Title == ""{
+func (gv *galleryValidator) titleRequired(gallery *Gallery) error {
+	if gallery.Title == "" {
 		return ErrGalleryTitleRequired
 	}
 	return nil
 }
 
-func (gv *galleryValidator) idGreaterThan(n uint) galleryValidatorFunction{
-	return galleryValidatorFunction(func(gallery *Gallery) error{
-		if gallery.ID<= n{
+func (gv *galleryValidator) idGreaterThan(n uint) galleryValidatorFunction {
+	return galleryValidatorFunction(func(gallery *Gallery) error {
+		if gallery.ID <= n {
 			return ErrIDInvalid
 		}
 		return nil
@@ -94,31 +105,31 @@ func (gv *galleryValidator) idGreaterThan(n uint) galleryValidatorFunction{
 
 var _ GalleryDB = &galleryGorm{}
 
-type galleryGorm struct{
+type galleryGorm struct {
 	db *gorm.DB
 }
 
-func (gg *galleryGorm) Create(gallery *Gallery) error{
+func (gg *galleryGorm) Create(gallery *Gallery) error {
 	return gg.db.Create(gallery).Error
 }
 
-func (gg *galleryGorm) Update(gallery *Gallery) error{
+func (gg *galleryGorm) Update(gallery *Gallery) error {
 	return gg.db.Save(gallery).Error
 }
 
-func (gg *galleryGorm) ByID(id uint) (*Gallery, error){
+func (gg *galleryGorm) ByID(id uint) (*Gallery, error) {
 	var gallery Gallery
 	db := gg.db.Where("id=?", id)
 	err := first(db, &gallery)
 	return &gallery, err
 }
 
-func (gg *galleryGorm) Delete(id uint) error{
+func (gg *galleryGorm) Delete(id uint) error {
 	gallery := Gallery{Model: gorm.Model{ID: id}}
 	return gg.db.Delete(gallery).Error
 }
 
-func (gg *galleryGorm) ByUserID(userID uint) ([]Gallery, error){
+func (gg *galleryGorm) ByUserID(userID uint) ([]Gallery, error) {
 	var galleries []Gallery
 	gg.db.Where("user_id=?", userID).Find(&galleries)
 	return galleries, nil
@@ -126,9 +137,9 @@ func (gg *galleryGorm) ByUserID(userID uint) ([]Gallery, error){
 
 type galleryValidatorFunction func(*Gallery) error
 
-func runGalleryValidatorFunction(gallery *Gallery, fns ...galleryValidatorFunction) error{
-	for _,fn :=range fns {
-		if err := fn(gallery); err!=nil{
+func runGalleryValidatorFunction(gallery *Gallery, fns ...galleryValidatorFunction) error {
+	for _, fn := range fns {
+		if err := fn(gallery); err != nil {
 			return err
 		}
 	}

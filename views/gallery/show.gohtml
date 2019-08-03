@@ -3,15 +3,22 @@
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <h1 class="card-title">{{.Title}}</h1>
-                <ul>
-                    {{range .Images}}
-                        <li>
-                            {{.}}
-                        </li>
-                    {{end}}
-                </ul>
-                <p>Images coming soon...</p>
+                <hr/>
             </div>
         </div>
+        <div class="row justify-content-center">
+            {{range .ImageSplitN 3}}
+                <div class="col-md-4">
+                    {{range .}}
+                        <img src="{{.}}" class="thumbnail"/>
+                    {{end}}
+                </div>
+            {{end}}
+        </div>
     </div>
+    <style>
+        .thumbnail {
+            width: 100%;
+        }
+    </style>
 {{end}}

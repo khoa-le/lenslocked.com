@@ -83,6 +83,8 @@ func (g *Gallery) Edit(w http.ResponseWriter, r *http.Request) {
 
 	var vd views.Data
 	vd.Yield = gallery
+	images, err := g.is.ByGalleryID(gallery.ID)
+	gallery.Images = images
 	g.EditView.Render(w, r, vd)
 }
 
@@ -119,6 +121,7 @@ func (g *Gallery) Update(w http.ResponseWriter, r *http.Request) {
 		Level:   views.AlertLevelSuccess,
 		Message: "Gallery successfully updated!",
 	}
+
 	g.EditView.Render(w, r, vd)
 }
 
@@ -162,13 +165,11 @@ func (g *Gallery) ImageUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	images, err := g.is.ByGalleryID(gallery.ID)
+	url, err := g.r.Get(RouteEditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
-		panic(err)
+		http.Redirect(w, r, "/gallery", http.StatusFound)
 	}
-
-	fmt.Fprintln(w, "Files:", images)
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 //POST /gallery/:id/delete

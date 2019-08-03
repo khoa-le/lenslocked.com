@@ -2,7 +2,14 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-12">
+                <h2>Edit your gallery</h2>
+                <a href="/gallery/{{.ID}}">View this gallery</a>
+            </div>
+            <div class="col-md-12">
                 {{template "editGalleryForm" .}}
+            </div>
+            <div class="col-md-12">
+                {{template "galleryImages" .}}
             </div>
             <div class="col-md-10 col-md-offset-1">
                 {{template "uploadImageForm" .}}
@@ -51,4 +58,21 @@
             </div>
         </div>
     </form>
+{{end}}
+
+{{define "galleryImages"}}
+    <div class="row">
+        {{range .ImageSplitN 6}}
+            <div class="col-md-2">
+                {{range .}}
+                    <img src="{{.}}" class="thumbnail"/>
+                {{end}}
+            </div>
+        {{end}}
+    </div>
+    <style>
+        .thumbnail {
+            width: 100%;
+        }
+    </style>
 {{end}}
