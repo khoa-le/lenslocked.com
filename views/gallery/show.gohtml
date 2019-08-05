@@ -6,11 +6,11 @@
                 <hr/>
             </div>
         </div>
-        <div class="row justify-content-center">
+        <div class="row">
             {{range .ImageSplitN 3}}
                 <div class="col-md-4">
                     {{range .}}
-                        <img src="{{.}}" class="thumbnail"/>
+                        <img src="{{.Path}}" class="thumbnail"/>
                     {{end}}
                 </div>
             {{end}}

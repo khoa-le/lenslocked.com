@@ -59,6 +59,8 @@ func main() {
 	r.HandleFunc("/gallery/{id:[0-9]+}/edit", requireUserMw.ApplyFn(galleryController.Edit)).Methods("GET").Name(controllers.RouteEditGallery)
 	r.HandleFunc("/gallery/{id:[0-9]+}/update", requireUserMw.ApplyFn(galleryController.Update)).Methods("POST").Name(controllers.RouteUpdateGallery)
 	r.HandleFunc("/gallery/{id:[0-9]+}/images", requireUserMw.ApplyFn(galleryController.ImageUpload)).Methods("POST")
+	r.HandleFunc("/gallery/{id:[0-9]+}/images/{filename}/delete", requireUserMw.ApplyFn(galleryController.ImageDelete)).Methods("POST")
+
 	r.HandleFunc("/gallery/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleryController.Delete)).Methods("POST")
 
 	fmt.Println("Starting the server on :3000...")

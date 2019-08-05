@@ -1,6 +1,9 @@
 package views
 
-import "lenslocked.com/models"
+import (
+	"lenslocked.com/models"
+	"log"
+)
 
 const (
 	AlertLevelError = "danger"
@@ -35,6 +38,7 @@ func (d *Data) SetAlert(err error){
 			Message: pErr.Public(),
 		}
 	}else{
+		log.Println(err)
 		d.Alert = &Alert{
 			Level: AlertLevelError,
 			Message : AlertMessageGeneric,
