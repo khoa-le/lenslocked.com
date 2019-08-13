@@ -47,6 +47,9 @@ func main() {
 	r.HandleFunc("/login", userController.Login).Methods("GET")
 	r.HandleFunc("/login", userController.DoLogin).Methods("POST")
 
+	assetsHandler := http.FileServer(http.Dir("./assets/"))
+	r.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", assetsHandler))
+
 	//Images route
 	imageHandler := http.FileServer(http.Dir("./images/"))
 	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
