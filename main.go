@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"lenslocked.com/controllers"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
+	"lenslocked.com/rand"
 	"net/http"
 )
 
@@ -32,6 +34,13 @@ func main() {
 	staticController := controllers.NewStatic()
 	userController := controllers.NewUser(services.User)
 	galleryController := controllers.NewGallery(services.Gallery, services.Image, r)
+
+	randomBytes, err := rand.Bytes(32)
+	if err != nil{
+		panic(err)
+	}
+	isProd := false
+	csrfMw := csrf.Protect(randomBytes, csrf.Secure(isProd))
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -67,5 +76,5 @@ func main() {
 	r.HandleFunc("/gallery/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleryController.Delete)).Methods("POST")
 
 	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000", userMw.Apply(r))
+	http.ListenAndServe(":3000",csrfMw(userMw.Apply(r)))
 }

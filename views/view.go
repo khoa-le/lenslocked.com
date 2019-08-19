@@ -2,6 +2,8 @@ package views
 
 import (
 	"bytes"
+	"errors"
+	"github.com/gorilla/csrf"
 	"html/template"
 	"io"
 	"net/http"
@@ -20,7 +22,11 @@ func NewView(layout string, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
-	t, err := template.ParseFiles(files...)
+	t, err := template.New("").Funcs(template.FuncMap{
+		csrf.TemplateTag: func() (template.HTML, error) {
+			return "", errors.New("csrfField is not implemented")
+		},
+	}).ParseFiles(files...)
 	if err != nil {
 		panic(err)
 	}
@@ -37,11 +43,11 @@ type View struct {
 }
 
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	v.Render(w, r,nil)
+	v.Render(w, r, nil)
 }
 
 //Render is used to render the view with  the predefined layout
-func (v *View) Render(w http.ResponseWriter,r *http.Request, data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	var vd Data
 	switch d := data.(type) {
@@ -53,11 +59,17 @@ func (v *View) Render(w http.ResponseWriter,r *http.Request, data interface{}) {
 		}
 	}
 	vd.User = context.User(r.Context())
-
 	var buff bytes.Buffer
 
-	if err:= v.Template.ExecuteTemplate(&buff, v.Layout, vd); err !=nil{
-		http.Error(w,"Something went wrong.",http.StatusInternalServerError)
+	csrfField := csrf.TemplateField(r)
+	tpl := v.Template.Funcs(template.FuncMap{
+		csrf.TemplateTag: func() template.HTML {
+			return csrfField
+		},
+	})
+
+	if err := tpl.ExecuteTemplate(&buff, v.Layout, vd); err != nil {
+		http.Error(w, "Something went w  rong.", http.StatusInternalServerError)
 		return
 	}
 	io.Copy(w, &buff)
