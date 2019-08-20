@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"net/url"
 )
 
 type Image struct {
@@ -18,7 +19,11 @@ func (i *Image) RelativePath() string{
 }
 
 func (i *Image) Path() string {
-	return "/"+ i.RelativePath()
+	url := url.URL{
+		Path: "/" + i.RelativePath(),
+	}
+
+	return url.String()
 }
 
 type ImageService interface {

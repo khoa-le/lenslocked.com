@@ -6,7 +6,9 @@ import (
 	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"lenslocked.com/views"
+	"log"
 	"net/http"
+	url2 "net/url"
 	"strconv"
 )
 
@@ -185,8 +187,16 @@ func (g *Gallery) ImageDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	vars := mux.Vars(r)
-	fileName := vars["filename"]
+	fileName,err := url2.QueryUnescape(vars["filename"])
 
+	if err != nil{
+		log.Println(err)
+		var vd views.Data
+		vd.Yield = gallery
+		vd.SetAlert(err)
+		g.EditView.Render(w, r, vd)
+		return
+	}
 	i := models.Image{
 		FileName:  fileName,
 		GalleryID: gallery.ID,
