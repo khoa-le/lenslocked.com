@@ -13,9 +13,6 @@ import (
 
 )
 
-const userPwdPepper = "secret-random-string"
-const hmacSecretKey = "secret-hmac-key"
-
 //User represents the user model stored in our database
 //This is used for user account
 type User struct{
@@ -52,14 +49,15 @@ type UserService interface{
 	UserDB
 }
 
-func NewUserService(db *gorm.DB) UserService{
+func NewUserService(db *gorm.DB, pepper string, hmacKey string) UserService{
 	ug := &userGorm{db}
-	hmac := hash.NewHMAC(hmacSecretKey)
+	hmac := hash.NewHMAC(hmacKey)
 
-	uv := newUserValidator(ug, hmac)
+	uv := newUserValidator(ug, hmac, pepper)
 
 	return &userService{
 		UserDB :uv,
+		pepper: pepper,
 	}
 }
 
@@ -67,6 +65,7 @@ var _ UserService = &userService{}
 
 type userService struct{
 	UserDB
+	pepper string
 }
 
 //Authenticate can be used to authenticate a user with the email and password
@@ -75,7 +74,7 @@ func (us *userService) Authenticate(email,password string) (*User, error){
 	if err != nil{
 		return nil, err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(foundUser.PasswordHash),[]byte(password + userPwdPepper))
+	err = bcrypt.CompareHashAndPassword([]byte(foundUser.PasswordHash),[]byte(password + us.pepper))
 	if err != nil{
 		switch err {
 			case bcrypt.ErrMismatchedHashAndPassword: 
@@ -101,11 +100,12 @@ func runUserValidatorFunction(user *User, fns ...userValidatorFunction) error{
 
 var _ UserDB = &userValidator{}
 
-func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator{
+func newUserValidator(udb UserDB, hmac hash.HMAC, pepper string) *userValidator{
 	return &userValidator{
 		UserDB: udb,
 		hmac: hmac,
 		emailRegex: regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+		pepper: pepper,
 	}
 }
 
@@ -113,6 +113,7 @@ type userValidator struct{
 	UserDB
 	hmac hash.HMAC
 	emailRegex *regexp.Regexp
+	pepper string
 }
 
 //ByEmail will normalize the email address before calling
@@ -197,7 +198,7 @@ func (uv *userValidator) bcryptPassword(user *User) error{
 	if user.Password == ""{
 		return nil
 	}
-	pwBytes := []byte(user.Password + userPwdPepper)
+	pwBytes := []byte(user.Password + uv.pepper)
 	hashedBytes,err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err!=nil{
 		return err

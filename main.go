@@ -11,17 +11,16 @@ import (
 	"net/http"
 )
 
-const (
-	host   = "localhost"
-	port   = "5432"
-	user   = "khoa"
-	dbname = "lenslocked_dev"
-)
-
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable",
-		host, port, user, dbname)
-	services, err := models.NewServices(psqlInfo)
+	cfg := DefaultConfig()
+	dbCfg := DefaultPostgresConfig()
+	services, err := models.NewServices(
+		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
+		models.WithLogMode(!cfg.IsProd()),
+		models.WithUser(cfg.Pepper, cfg.HMACKey),
+		models.WithGallery(),
+		models.WithImage(),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -36,11 +35,11 @@ func main() {
 	galleryController := controllers.NewGallery(services.Gallery, services.Image, r)
 
 	randomBytes, err := rand.Bytes(32)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
-	isProd := false
-	csrfMw := csrf.Protect(randomBytes, csrf.Secure(isProd))
+
+	csrfMw := csrf.Protect(randomBytes, csrf.Secure(cfg.IsProd()))
 
 	userMw := middleware.User{
 		UserService: services.User,
@@ -75,6 +74,6 @@ func main() {
 
 	r.HandleFunc("/gallery/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleryController.Delete)).Methods("POST")
 
-	fmt.Println("Starting the server on :3000...")
-	http.ListenAndServe(":3000",csrfMw(userMw.Apply(r)))
+	fmt.Println("Starting the server on :%d...\n", cfg.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), csrfMw(userMw.Apply(r)))
 }
