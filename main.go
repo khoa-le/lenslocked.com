@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -12,8 +13,11 @@ import (
 )
 
 func main() {
-	cfg := DefaultConfig()
-	dbCfg := DefaultPostgresConfig()
+	boolPtr := flag.Bool("prod", false, "Provide this flag in production. This ensures" +
+		"that a .config file is provided before the application start.")
+	flag.Parse()
+	cfg := LoadConfig(*boolPtr)
+	dbCfg  := cfg.Database
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
 		models.WithLogMode(!cfg.IsProd()),
@@ -26,7 +30,6 @@ func main() {
 	}
 
 	defer services.Close()
-	//services.DestructiveReset()
 	services.AutoMigrate()
 
 	r := mux.NewRouter()
@@ -74,6 +77,6 @@ func main() {
 
 	r.HandleFunc("/gallery/{id:[0-9]+}/delete", requireUserMw.ApplyFn(galleryController.Delete)).Methods("POST")
 
-	fmt.Println("Starting the server on :%d...\n", cfg.Port)
+	fmt.Println("Starting the server on :", cfg.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), csrfMw(userMw.Apply(r)))
 }
